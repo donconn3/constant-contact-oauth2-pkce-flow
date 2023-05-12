@@ -1,0 +1,15 @@
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function
+
+https://www.unsungnovelty.org/posts/02/2022/initlogs-4-why-am-i-getting-object-promise-when-calling-async-function-in-javascript/
+
+https://docs.cotter.app/sdk-reference/api-for-other-mobile-apps/api-for-mobile-apps#step-1-create-a-code-verifier
+
+https://developer.constantcontact.com/api_guide/pkce_flow.html
+
+https://developer.constantcontact.com/api_reference/index.html#!/Email_Scheduling/retrieveEmailSendHistoryUsingGET
+
+https://getbootstrap.com/docs/5.0/layout/columns/
+
+https://axios-http.com/docs/example
+
+https://auth0.com/docs/get-started/authentication-and-authorization-flow/add-login-using-the-authorization-code-flow-with-pkce#post-to-token-url-example
