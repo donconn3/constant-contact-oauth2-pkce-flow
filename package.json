@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "crypto": "^1.0.1",
-    "node": "^20.1.0"
-  }
-}
