@@ -18,46 +18,64 @@ function generateCodeVerifier() {
     return generateRandomString();
   }
   
-  function generateCodeChallenge(codeVerifier) {
-    // var encoder = new TextEncoder();
-    // var data = encoder.encode(codeVerifier);
+  // function generateCodeChallenge(codeVerifier) {
+  //   // var encoder = new TextEncoder();
+  //   // var data = encoder.encode(codeVerifier);
   
-    // return sha256(data)
-    //   .then((hashBuffer) => {
-    //     var hashArray = Array.from(new Uint8Array(hashBuffer));
-    //     var hashHex = hashArray
-    //       .map(function(byte) {
-    //         return byte.toString(16).padStart(2, '0');
-    //       })
-    //       .join('');
+  //   // return sha256(data)
+  //   //   .then((hashBuffer) => {
+  //   //     var hashArray = Array.from(new Uint8Array(hashBuffer));
+  //   //     var hashHex = hashArray
+  //   //       .map(function(byte) {
+  //   //         return byte.toString(16).padStart(2, '0');
+  //   //       })
+  //   //       .join('');
   
-    //     return base64UrlEncode(hashHex);
-    //   });
-    var codeChallenge = base64UrlEncode(sha256(codeVerifier));
-    return codeChallenge;
+  //   //     return base64UrlEncode(hashHex);
+  //   //   });
+  //   var codeChallenge = base64UrlEncode(sha256(codeVerifier));
+  //   return codeChallenge;
+  // }
+  async function generateChallenge(){
+  function sha256(plain) { // returns promise ArrayBuffer
+    const encoder = new TextEncoder();
+    const data = encoder.encode(plain);
+    return window.crypto.subtle.digest('SHA-256', data);
   }
   
-  function sha256(data) {
-    var buffer = new Uint8Array(data.buffer);
-    return crypto.subtle.digest('SHA-256', buffer);
+  function base64urlencode(a) {
+    var str = "";
+    var bytes = new Uint8Array(a);
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+      str += String.fromCharCode(bytes[i]);
+    }
+    return btoa(str)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+  }
+
+
+  async function challenge_from_verifier(v) {
+    hashed = await sha256(v);
+    let base64encoded = base64urlencode(hashed);
+    localStorage.setItem('challenge', base64encoded);
+    return base64encoded;
   }
   
-  function base64UrlEncode(value) {
-    var base64 = btoa(value);
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
+  var challenge = await challenge_from_verifier(localStorage.getItem('verifier'));
+  };
   //sends user to authorization endpoint
   function initiateAuthorization() {  
     var codeVerifier = generateCodeVerifier();
     localStorage.setItem('verifier', codeVerifier);
-    var codeChallenge = generateCodeChallenge(codeVerifier);
-    localStorage.setItem('challenge', codeChallenge);
-  
+    generateChallenge();
     var authorizationUrl = new URL('https://authz.constantcontact.com/oauth2/default/v1/authorize')
     authorizationUrl.searchParams.set('client_id', key)
     authorizationUrl.searchParams.set('redirect_uri', redirectURI)
     authorizationUrl.searchParams.set('response_type', 'code')
-    authorizationUrl.searchParams.set('code_challenge', codeChallenge)
+    authorizationUrl.searchParams.set('code_challenge', localStorage.getItem('challenge'))
     authorizationUrl.searchParams.set('code_challenge_method', 'S256')
     authorizationUrl.searchParams.set('state', state)
     authorizationUrl.searchParams.set('scope', 'campaign_data offline_access');
