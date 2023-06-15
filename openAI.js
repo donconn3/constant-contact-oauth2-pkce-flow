@@ -82,6 +82,10 @@ function generateCodeVerifier() {
     document.getElementById('dataSent').textContent = authorizationUrl;
     window.location.href = authorizationUrl;
   }
+  
+//gets access token
+let accessToken;
+
 //grabs the authorization code
   function handleCallback() {
     var queryParams = new URLSearchParams(window.location.search);
@@ -90,8 +94,7 @@ function generateCodeVerifier() {
     // Exchange the authorization code for an access token
     exchangeCodeForToken(authorizationCode);
   }
-//gets access token
-let accessToken;
+
 
   function exchangeCodeForToken(authorizationCode) {
     var tokenEndpoint = 'https://authz.constantcontact.com/oauth2/default/v1/token';
@@ -102,13 +105,13 @@ let accessToken;
       redirect_uri: redirectURI,
       code: authorizationCode,
       code_verifier: codeVerifier,
-      grant_type:'authorization_code'
+      grant_type:"authorization_code"
     };
   
     axios.post(tokenEndpoint, new URLSearchParams(tokenData), {
       headers: {
         "Accept": "application/json",
-        'Content-Type': 'application/x-www-form-urlencoded'
+        "Content-Type": "application/x-www-form-urlencoded"
       }
     })
       .then(function(response) {
