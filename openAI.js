@@ -9,7 +9,7 @@ function generateCodeVerifier() {
       }
       
       function generateRandomString() {
-        var array = new Uint32Array(56/2);
+        var array = new Uint32Array(26/2);
         window.crypto.getRandomValues(array);
         
         return Array.from(array, dec2hex).join('');
@@ -66,12 +66,8 @@ function generateCodeVerifier() {
   
   var challenge = await challenge_from_verifier(localStorage.getItem('verifier'));
   };
-  //sends user to authorization endpoint
-  function initiateAuthorization() {  
-    var codeVerifier = generateCodeVerifier();
-    localStorage.setItem('verifier', codeVerifier);
-    generateChallenge();
-    var authorizationUrl = new URL('https://authz.constantcontact.com/oauth2/default/v1/authorize')
+async function generateLink(){
+  var authorizationUrl = new URL('https://authz.constantcontact.com/oauth2/default/v1/authorize')
     authorizationUrl.searchParams.set('client_id', key)
     authorizationUrl.searchParams.set('redirect_uri', redirectURI)
     authorizationUrl.searchParams.set('response_type', 'code')
@@ -81,6 +77,15 @@ function generateCodeVerifier() {
     authorizationUrl.searchParams.set('scope', 'campaign_data offline_access');
     document.getElementById('dataSent').textContent = authorizationUrl;
     window.location.href = authorizationUrl;
+}
+
+  //sends user to authorization endpoint
+  async function initiateAuthorization() {  
+    var codeVerifier = generateCodeVerifier();
+    localStorage.setItem('verifier', codeVerifier);
+    await generateChallenge(codeVerifier);
+    await generateLink();
+    
   }
 //grabs the authorization code
   function handleCallback() {
@@ -123,8 +128,11 @@ let accessToken;
       });
   }
 
-  function makeApiRequest(accessToken) {
+let bulkEmails = [];
+
+  function makeApiRequest() {
     var apiUrl = 'https://api.cc.email/v3/emails';
+    let accessToken = localStorage.getItem('accessToken');
   
     axios.get(apiUrl, {
       headers: {
@@ -132,11 +140,30 @@ let accessToken;
       }
     })
       .then(function(response) {
-        let result = response.data;
-        document.getElementById('dataReturn').textContent = result;
+        bulkEmails = response.data.campaigns;
+        document.getElementById('dataReturn').textContent = JSON.stringify(bulkEmails[0].name);
+        console.log(bulkEmails)
       })
       .catch(function(error) {
         console.error(error);
       });
   }
   
+  function displayData(){
+    let placeholder = document.querySelector('#data-output');
+    let display = "";
+    let counter = 1;
+    for(let campaign of bulkEmails){
+        display += `
+        <tr>
+        <th scope="row">${counter}</th>
+        <td>${campaign.campaign_id}</td>
+        <td>${campaign.current_status}</td>
+        <td>${campaign.name}</td>
+        <td>${campaign.created_at}</td>
+      </tr>
+      `;
+      counter++;
+    }
+    placeholder.innerHTML = display;
+  }
