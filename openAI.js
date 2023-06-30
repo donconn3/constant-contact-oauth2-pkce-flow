@@ -131,7 +131,7 @@ let accessToken;
 let bulkEmails = [];
 
   function makeApiRequest() {
-    var apiUrl = 'https://api.cc.email/v3/emails';
+    var apiUrl = 'https://api.cc.email/v3/reports/summary_reports/email_campaign_summaries';
     let accessToken = localStorage.getItem('accessToken');
   
     axios.get(apiUrl, {
@@ -140,7 +140,7 @@ let bulkEmails = [];
       }
     })
       .then(function(response) {
-        bulkEmails = response.data.campaigns;
+        bulkEmails = response.data.bulk_email_campaign_summaries;
         document.getElementById('dataReturn').textContent = JSON.stringify(bulkEmails[0].name);
         console.log(bulkEmails)
       })
@@ -158,12 +158,41 @@ let bulkEmails = [];
         <tr>
         <th scope="row">${counter}</th>
         <td>${campaign.campaign_id}</td>
-        <td>${campaign.current_status}</td>
-        <td>${campaign.name}</td>
-        <td>${campaign.created_at}</td>
-      </tr>
-      `;
+        <td>${campaign.unique_counts.sends}</td>
+        <td>${campaign.unique_counts.opens}</td>
+        <td>${campaign.unique_counts.clicks}</td>
+        <td>${campaign.unique_counts.abuse}</td>
+        <td>${campaign.unique_counts.optouts}</td>
+      </tr>`;
       counter++;
     }
     placeholder.innerHTML = display;
   }
+
+  function getSingleEmailCampaignDetails(id) {
+    var apiUrl = 'https://api.cc.email/v3/emails/' + id;
+    let accessToken = localStorage.getItem('accessToken');
+  
+    axios.get(apiUrl, {
+      headers: {
+        'Authorization': 'Bearer ' + accessToken
+      }
+    })
+      .then(function(response) {
+        singleCampaignDataActivityId = response.data.campaign_activities[0].campaign_activity_id;
+        // document.getElementById('dataReturn').textContent = JSON.stringify(bulkEmails[0].name);
+        // console.log(bulkEmails)
+      })
+      .catch(function(error) {
+        console.error(error);
+      });
+  }
+
+//   async function individualData(this){
+//     let singleCampaignDataActivityId = {};
+//     let singleCampaignActivity = {};
+//     let singleCampaignSendHistory = {};
+// https://blog.skay.dev/custom-spa-router-vanillajs   // deals with path routing and state management
+// // create popup and create api calls, make sure 2nd and 3rd calls are async/await
+
+//   }
