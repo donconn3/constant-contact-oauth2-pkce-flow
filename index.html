@@ -9,19 +9,25 @@
         <link rel="stylesheet" href="/style.css">
         <link rel="icon" href="data:;base64,iVBORw0KGgo=">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.css">
+        
     </head>
-    <body>
+    <body">
       <div class="container">
-        <table class="table table-striped table-hover" >
+        <table id="myTable" class="table table-striped table-hover" >
             <thead>
               <tr>
                 <th scope="col">#</th>
-                <th scope="col">Campaign ID</th>
+                <th style="visibility:hidden;" scope="col">Activity ID</th>
+                <th style="visibility:hidden;" scope="col">Campaign ID</th>
+                <th scope="col">Name in CC</th>
+                <th scope="col">Subject</th>
                 <th scope="col">Sends</th>
                 <th scope="col">Opens</th>
                 <th scope="col">Clicks</th>
                 <th scope="col">Spam</th>
                 <th scope="col">Unsubscribes</th>
+                <th scope="col">Time Sent</th>
               </tr>
             </thead>
             <tbody id="data-output">
@@ -30,43 +36,67 @@
                 <td>Mark</td>
                 <td>Otto</td>
                 <td>@mdo</td>
+                <td>Mark</td>
+                <td>Otto</td>
+                <td>@mdo</td>
+                <td>Mark</td>
+                <td>Otto</td>
+                <td>Mark</td>
+                <td>Otto</td>
               </tr>
               <tr>
                 <th scope="row">2</th>
-                <td>Jacob</td>
-                <td>Thornton</td>
-                <td>@fat</td>
+                <td>Mark</td>
+                <td>Otto</td>
+                <td>@mdo</td>
+                <td>Mark</td>
+                <td>Otto</td>
+                <td>@mdo</td>
+                <td>Mark</td>
+                <td>Otto</td>
+                <td>Mark</td>
+                <td>Otto</td>
               </tr>
               <tr>
                 <th scope="row">3</th>
-                <td colspan="2">Larry the Bird</td>
-                <td>@twitter</td>
+                <td>Mark</td>
+                <td>Otto</td>
+                <td>@mdo</td>
+                <td>Mark</td>
+                <td>Otto</td>
+                <td>@mdo</td>
+                <td>Mark</td>
+                <td>Otto</td>
+                <td>Mark</td>
+                <td>Otto</td>
               </tr>
             </tbody>
           </table>
-          <div class="row">
+          <div class="btn-group text-nowrap" role="group">
+          
             <div class="col get-access">
-                <button type="button" id="send-link" onclick="initiateAuthorization()">Get Link</button>
+                <button class="btn btn-primary" type="button" id="send-link" onclick="initiateAuthorization()">Get Link</button>
                 <p id="dataSent"></p>
             </div>
-         </div>
-         <div class="row">
-              <div class="col get-access">
-                  <button type="button" id="send-link" onclick="makeApiRequest()">Get Data</button>
+            <div class="col get-access ps-3">
+                  <button class="btn btn-primary" type="button" id="send-link" onclick="makeApiRequest()">Get Data</button>
                   <p id="dataReturn"></p>
-              </div>
-          </div>
-          <div class="row">
-            <div class="col get-access">
-                <button type="button" id="send-link" onclick="displayData()">Display Data</button>
             </div>
-        </div>
+            <div class="col get-access ps-3">
+                <button class="text-nowrap btn btn-primary" type="button" id="send-link" onclick="displayData()">Display Data</button>
+            </div>
+      </div>   
       </div>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
-        <script src="/openAI.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js" integrity="sha512-szJ5FSo9hEmXXe7b5AUVtn/WnL8a5VofnFeYC2i2z03uS2LhAch7ewNLbl5flsEmTTimMN0enBZg/3sQ+YOSzQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js" integrity="sha512-szJ5FSo9hEmXXe7b5AUVtn/WnL8a5VofnFeYC2i2z03uS2LhAch7ewNLbl5flsEmTTimMN0enBZg/3sQ+YOSzQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      
+      <script src="/openAI.js"></script>
+      
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js" integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.js"></script>
+      <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-1.13.5/b-2.4.1/b-html5-2.4.1/sb-1.5.0/datatables.min.js"></script>
+      
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     </body>
    
 </html>
