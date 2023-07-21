@@ -2,6 +2,7 @@ const key = "fdecc623-9afa-4746-b91f-4da34ab42902";
 const redirectURI = "http://localhost:8080/login.html";
 const state = Math.random().toString(36).slice(2);
 
+
 //Generates verifier and challenge
 function generateCodeVerifier() {
     function dec2hex(dec) {
@@ -128,45 +129,119 @@ let accessToken;
       });
   }
 
-let bulkEmails = [];
 
-  function makeApiRequest() {
-    var apiUrl = 'https://api.cc.email/v3/reports/summary_reports/email_campaign_summaries';
+let bulkEmails = [];
+let emails = [];
+
+  async function makeApiRequest() {
+    var apiReport = 'https://api.cc.email/v3/reports/summary_reports/email_campaign_summaries';
+    var apiEmail = 'https://api.cc.email/v3/emails/'
     let accessToken = localStorage.getItem('accessToken');
+    emails =[];
   
-    axios.get(apiUrl, {
+    await axios.get(apiReport, {
       headers: {
         'Authorization': 'Bearer ' + accessToken
       }
     })
-      .then(function(response) {
-        bulkEmails = response.data.bulk_email_campaign_summaries;
-        document.getElementById('dataReturn').textContent = JSON.stringify(bulkEmails[0].name);
-        console.log(bulkEmails)
-      })
-      .catch(function(error) {
-        console.error(error);
+      .then(function(response1) {
+        bulkEmails = response1.data.bulk_email_campaign_summaries;
+      }).catch(function(error) {
+          console.error(error);
       });
+
+        for(let i = 0; i < bulkEmails.length; i++){
+          setTimeout(function() {            
+             axios
+            .get(apiEmail + bulkEmails[i].campaign_id, {
+                headers: {
+                  'Authorization': 'Bearer ' + accessToken
+                }
+              })
+              .then((response2) =>{
+                   Promise.all([
+                      axios.get(apiEmail + 'activities/' + response2.data.campaign_activities[0].campaign_activity_id, {
+                        headers: {
+                          'Authorization': 'Bearer ' + accessToken
+                        }
+                      }),
+                      axios.get(apiEmail + 'activities/' + response2.data.campaign_activities[0].campaign_activity_id + '/send_history', {
+                        headers: {
+                          'Authorization': 'Bearer ' + accessToken
+                        }
+                      })
+                ])
+                .then(async([res1, res2]) => {
+                  const value1 = await res1.data;
+                  const value2 = await res2.data;
+
+                  let email ={
+                    activity_id:response2.data.campaign_activities[0].campaign_activity_id,
+                    campaign_id:bulkEmails[i].campaign_id,
+                    name:response2.data.name,
+                    subject:value1.subject,
+                    sends:bulkEmails[i].unique_counts.sends,
+                    opens:bulkEmails[i].unique_counts.opens,
+                    clicks:bulkEmails[i].unique_counts.clicks,
+                    spam:bulkEmails[i].unique_counts.abuse,
+                    unsubscribe:bulkEmails[i].unique_counts.optouts,
+                    time_sent:new Date(value2[0].run_date)
+                  };
+
+                  emails.push(email);
+                  
+                })
+              })
+      }, "700" * i);
+    };
+    localStorage.setItem('data', JSON.stringify(emails));
   }
-  
+  //below will be broken until I can finish adding all calls for campaigns
   function displayData(){
+    const emailTable = document.getElementById("myTable");
+    if(emails.length === 0){
+      emails = JSON.parse(localStorage.getItem("data"));
+      console.log(emails);
+    };
+    
     let placeholder = document.querySelector('#data-output');
     let display = "";
     let counter = 1;
-    for(let campaign of bulkEmails){
+    for(let email of emails){
         display += `
         <tr>
-        <th scope="row">${counter}</th>
-        <td>${campaign.campaign_id}</td>
-        <td>${campaign.unique_counts.sends}</td>
-        <td>${campaign.unique_counts.opens}</td>
-        <td>${campaign.unique_counts.clicks}</td>
-        <td>${campaign.unique_counts.abuse}</td>
-        <td>${campaign.unique_counts.optouts}</td>
+        <td>${counter}</td>
+        <td>${email.activity_id}</td>
+        <td>${email.campaign_id}</td>
+        <td>${email.name}</td>
+        <td>${email.subject}</td>
+        <td>${email.sends}</td>
+        <td>${email.opens}</td>
+        <td>${email.clicks}</td>
+        <td>${email.spam}</td>
+        <td>${email.unsubscribe}</td>
+        <td>${email.time_sent}</td>
       </tr>`;
       counter++;
     }
     placeholder.innerHTML = display;
+    
+    let table = new DataTable(emailTable,{
+        "columns": [
+          {data: counter},
+          { "visible": false},
+          { "visible": false},
+          { "data": 'name' },
+          { "data": 'subject' },
+          { "data": 'sends' },
+          { "data": 'opens' },
+          { "data": 'clicks' },
+          { "data": 'spam' },
+          { "data": 'unsubscribe' },
+          { "data": 'time_sent' }
+      ]
+        
+      });
   }
 
   function getSingleEmailCampaignDetails(id) {
