@@ -88,10 +88,6 @@ async function generateLink(){
     await generateLink();
     
   }
-  
-//gets access token
-let accessToken;
-
 //grabs the authorization code
   function handleCallback() {
     var queryParams = new URLSearchParams(window.location.search);
@@ -100,7 +96,8 @@ let accessToken;
     // Exchange the authorization code for an access token
     exchangeCodeForToken(authorizationCode);
   }
-
+//gets access token
+let accessToken;
 
   function exchangeCodeForToken(authorizationCode) {
     var tokenEndpoint = 'https://authz.constantcontact.com/oauth2/default/v1/token';
@@ -111,13 +108,13 @@ let accessToken;
       redirect_uri: redirectURI,
       code: authorizationCode,
       code_verifier: codeVerifier,
-      grant_type:"authorization_code"
+      grant_type:'authorization_code'
     };
   
     axios.post(tokenEndpoint, new URLSearchParams(tokenData), {
       headers: {
         "Accept": "application/json",
-        "Content-Type": "application/x-www-form-urlencoded"
+        'Content-Type': 'application/x-www-form-urlencoded'
       }
     })
       .then(function(response) {
@@ -177,7 +174,11 @@ let emails = [];
                 .then(async([res1, res2]) => {
                   const value1 = await res1.data;
                   const value2 = await res2.data;
-
+                  let options = {  
+                    year: "numeric", month: "short",  
+                    day: "numeric", hour: "2-digit", minute: "2-digit"  
+                };  
+                  
                   let email ={
                     activity_id:response2.data.campaign_activities[0].campaign_activity_id,
                     campaign_id:bulkEmails[i].campaign_id,
@@ -195,25 +196,35 @@ let emails = [];
                   
                 })
               })
+              localStorage.setItem('data', JSON.stringify(emails));
       }, "700" * i);
-    };
-    localStorage.setItem('data', JSON.stringify(emails));
+      
+    }
+    
   }
+
+
+  
   //below will be broken until I can finish adding all calls for campaigns
-  function displayData(){
+  function displayData(){  
     const emailTable = document.getElementById("myTable");
     if(emails.length === 0){
       emails = JSON.parse(localStorage.getItem("data"));
       console.log(emails);
-    };
+    }
+
+    for(let email of emails){
+        let newTime = moment(email.time_sent).subtract(4,'hours');
+        email.time_sent = newTime.toISOString();
+        
+      }
     
     let placeholder = document.querySelector('#data-output');
     let display = "";
-    let counter = 1;
+    
     for(let email of emails){
         display += `
         <tr>
-        <td>${counter}</td>
         <td>${email.activity_id}</td>
         <td>${email.campaign_id}</td>
         <td>${email.name}</td>
@@ -225,26 +236,78 @@ let emails = [];
         <td>${email.unsubscribe}</td>
         <td>${email.time_sent}</td>
       </tr>`;
-      counter++;
+     
     }
     placeholder.innerHTML = display;
-    
+   
+// Custom filtering function which will search data in column four between two values
+ //DataTable.datetime('MMM Do YYYY');
     let table = new DataTable(emailTable,{
         "columns": [
-          {data: counter},
           { "visible": false},
           { "visible": false},
-          { "data": 'name' },
-          { "data": 'subject' },
-          { "data": 'sends' },
-          { "data": 'opens' },
-          { "data": 'clicks' },
-          { "data": 'spam' },
-          { "data": 'unsubscribe' },
-          { "data": 'time_sent' }
-      ]
+          { "data": 'name',
+          render: DataTable.render.text() },
+          { "data": 'subject',
+          render: DataTable.render.text() },
+          { "data": 'sends',
+          render: DataTable.render.number()  },
+          { "data": 'opens',
+        render: DataTable.render.number() },
+          { "data": 'clicks',
+          render: DataTable.render.number()  },
+          { "data": 'spam',
+          render: DataTable.render.number()  },
+          { "data": 'unsubscribe',
+          render: DataTable.render.number()  },
+          { "data": 'time_sent',
+        render: DataTable.render.datetime('','MMM Do YYYY, h:mm A', 'en') }
+      ],
+    
+    order:[[9, 'desc']]
         
-      });
+      }); 
+      let minDate, maxDate;
+      DataTable.ext.search.push(function (settings, data, dataIndex) {
+    let min = minDate.val();
+    let max = maxDate.val();
+    let date = new Date(moment(data[9], 'MMM Do YYYY'));
+ 
+    if (
+        (min === null && max === null) ||
+        (min === null && date <= max) ||
+        (min <= date && max === null) ||
+        (min <= date && date <= max)
+    ) {
+        return true;
+    }
+    return false;
+});
+ 
+// Create date inputs
+minDate = new DateTime('#min', {
+    format: 'MMM Do YYYY'
+});
+maxDate = new DateTime('#max', {
+    format: 'MMM Do YYYY'
+});
+       // Refilter the table
+document.querySelectorAll('#min, #max').forEach((el) => {
+  el.addEventListener('change', () => table.draw());
+});
+
+table.on('click', 'tbody tr', (e) => {
+  let classList = e.currentTarget.classList;
+
+  if (classList.contains('selected')) {
+      classList.remove('selected');
+  }
+  else {
+      table.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
+      classList.add('selected');
+  }
+});
+
   }
 
   function getSingleEmailCampaignDetails(id) {
@@ -274,3 +337,5 @@ let emails = [];
 // // create popup and create api calls, make sure 2nd and 3rd calls are async/await
 
 //   }
+
+
