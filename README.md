@@ -38,12 +38,13 @@ Here is an example of the Dashboard. I hid the Subject lines and the Names of th
 
 ## How it works in short
 1. Follow CC [Quick Start Guide](https://developer.constantcontact.com/api_guide/getting_started.html)
-2. Download project and open in VS Code
-3. Put developer key in the openAI.js file where indicated (at that top)
-4. Run Live Server (extension) on VS Code
-5. Press "Connect to Constant Contact"
+2. Set the redirect URI to your localhost:[port]/login.html
+3. Download project and open in VS Code
+4. Put developer key in the openAI.js file where indicated (at that top)
+5. Run Live Server (extension) on VS Code
+6. Press "Connect to Constant Contact"
    - If it doesnt take you to a verification page to sign in to CC and/or you don't see a spinner icon, something went wrong. Check the console log
-6. Press "Get Data". A Modal will pop up and with a loading bar.
+7. Press "Get Data". A Modal will pop up and with a loading bar.
 	- If it doesn't say completed, don't worry. Close the model and go to the next step.
-7. Click "Display Data"
+8. Click "Display Data"
 	- If the table fills out, great! If not, open up the Browser Inspect/Dev Tools, click Console, repeat step 6, Debug
