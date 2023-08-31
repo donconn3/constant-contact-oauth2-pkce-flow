@@ -13,3 +13,5 @@ https://getbootstrap.com/docs/5.0/layout/columns/
 https://axios-http.com/docs/example
 
 https://auth0.com/docs/get-started/authentication-and-authorization-flow/add-login-using-the-authorization-code-flow-with-pkce#post-to-token-url-example
+
+https://docs.cotter.app/api-reference/user-api
