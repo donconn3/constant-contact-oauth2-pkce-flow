@@ -1,4 +1,5 @@
-const key = "fdecc623-9afa-4746-b91f-4da34ab42902";
+//** START OF OAUTH2 PKCE FLOW */
+const key = YOUR_DEVELOPER_KEY;
 const redirectURI = "http://localhost:8080/login.html";
 const state = Math.random().toString(36).slice(2);
 
@@ -76,7 +77,7 @@ async function generateLink(){
     authorizationUrl.searchParams.set('code_challenge_method', 'S256')
     authorizationUrl.searchParams.set('state', state)
     authorizationUrl.searchParams.set('scope', 'campaign_data offline_access');
-    document.getElementById('dataSent').textContent = authorizationUrl;
+    //document.getElementById('dataSent').textContent = authorizationUrl;
     window.location.href = authorizationUrl;
 }
 
@@ -126,18 +127,30 @@ let accessToken;
       .catch(function(error) {
         // Handle error
         console.error(error);
-      });
-  }
+      })
+      .finally(function(){
+        location.assign("http://localhost:8080/");
+      }
+  )}
+//** END OF OAUTH2 PKCE FLOW*/
+//If you're looking to MAKE a connection to Constant Contact, use the above code.
 
-
+//**START OF FIRST API CALL*/
 let bulkEmails = [];
 let emails = [];
+let emailCount = 0;
+const progressBody = document.getElementById("load-body");
+const progressBar = document.getElementById("load-bar");
+const modalTitle = document.getElementById("load-title");
 
+//Function makes 1 API call to get 50(default amount) emails
+//Then loops through each campaign to make 3 more calls
   async function makeApiRequest() {
     var apiReport = 'https://api.cc.email/v3/reports/summary_reports/email_campaign_summaries';
     var apiEmail = 'https://api.cc.email/v3/emails/'
     let accessToken = localStorage.getItem('accessToken');
     emails =[];
+    emailCount = 0;
   
     await axios.get(apiReport, {
       headers: {
@@ -147,11 +160,15 @@ let emails = [];
       .then(function(response1) {
         bulkEmails = response1.data.bulk_email_campaign_summaries;
       }).catch(function(error) {
-          console.error(error);
+          console.error(error + ": Something went wrong with the first API call to Constant Contact.");
       });
 
         for(let i = 0; i < bulkEmails.length; i++){
-          setTimeout(function() {            
+          //The timeout is needed because of the number of asynchronus calls being made
+          setTimeout(function() {
+              emailCount += 2;
+              progressBody.ariaValueNow = emailCount;
+              progressBar.style.width = emailCount + "%";            
              axios
             .get(apiEmail + bulkEmails[i].campaign_id, {
                 headers: {
@@ -192,28 +209,31 @@ let emails = [];
                     time_sent:new Date(value2[0].run_date)
                   };
 
-                  emails.push(email);
-                  
+                  emails.push(email);                  
                 })
               })
+              //updates local storage with the data that was downloaded so you can search/view it with out having to make the api calls again
               localStorage.setItem('data', JSON.stringify(emails));
-      }, "700" * i);
+              emailCount == 100 ? modalTitle.innerHTML = "Download Complete" : null;
+      }, "850" * i);
       
     }
     
   }
+//** END OF FIRST API CALL */
 
-
-  
-  //below will be broken until I can finish adding all calls for campaigns
+  //displays the email data using DataTables, Moment, Bootstrap5
   function displayData(){  
+    let open_rate;
     const emailTable = document.getElementById("myTable");
     if(emails.length === 0){
       emails = JSON.parse(localStorage.getItem("data"));
       console.log(emails);
     }
-
-    for(let email of emails){
+    //organizes the emails in order of time sent
+    let sortedDates = emails.sort((p1, p2) => (p1.time_sent > p2.time_sent) ? 1 : (p1.time_sent < p2.time_sent) ? -1 : 0);
+    //loops through the array and subtracts 4 hours to get the correct time for my timezone. Yours may differ
+    for(let email of sortedDates){
         let newTime = moment(email.time_sent).subtract(4,'hours');
         email.time_sent = newTime.toISOString();
         
@@ -222,18 +242,24 @@ let emails = [];
     let placeholder = document.querySelector('#data-output');
     let display = "";
     
-    for(let email of emails){
+    for(let email of sortedDates){
         display += `
-        <tr>
+        <tr >
         <td>${email.activity_id}</td>
         <td>${email.campaign_id}</td>
         <td>${email.name}</td>
         <td>${email.subject}</td>
         <td>${email.sends}</td>
+        <td>${open_rate}</td>
         <td>${email.opens}</td>
+        <td>${open_rate}</td>
         <td>${email.clicks}</td>
+        <td>${open_rate}</td>
+        <td>${open_rate}</td>
         <td>${email.spam}</td>
+        <td>${open_rate}</td>
         <td>${email.unsubscribe}</td>
+        <td>${open_rate}</td>
         <td>${email.time_sent}</td>
       </tr>`;
      
@@ -241,37 +267,116 @@ let emails = [];
     placeholder.innerHTML = display;
    
 // Custom filtering function which will search data in column four between two values
- //DataTable.datetime('MMM Do YYYY');
     let table = new DataTable(emailTable,{
-        "columns": [
+      dom: "<'row'<'col'B><'col'fr>><t><'row'<'col'lip>>",
+      'buttons': [
+          {
+            extend: 'copy',
+            className:'btn btn-warning btn-md gap-1',
+            exportOptions: { 
+              orthogonal: 'export',
+              columns: ':visible' 
+            }
+        },
+       
+        {
+            extend: 'excel',
+            className:'btn btn-warning btn-md gap-1',
+            customize: function( xlsx ) {
+              // see built in styles here: https://datatables.net/reference/button/excelHtml5
+              //https://datatables.net/forums/discussion/43973/excel-customization-with-4-decimal-places#Comment_116636
+                var sSh = xlsx.xl['styles.xml'];
+              //below could be replaced with use of .innerHtml but that doesn't work in IE
+                var newPercentageFormat =sSh.childNodes[0].childNodes[0].childNodes[3].cloneNode(false);
+                newPercentageFormat.setAttribute('formatCode','##0.00%');
+                newPercentageFormat.setAttribute('numFmtId','180');
+                sSh.childNodes[0].childNodes[0].appendChild(newPercentageFormat);
+                $(sSh).find('numFmts').attr('count', '7');
+                $(sSh).find('xf[numFmtId="9"]').attr('numFmtId', '180');
+                var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                $('row c[r^="B"]', sheet).attr( 's', '63' );
+                $('row c[r^="C"]', sheet).attr( 's', '63' );
+                $('row c[r^="D"]', sheet).attr( 's', '63' );
+                $('row c[r^="F"]', sheet).attr( 's', '63' );
+                $('row c[r^="K"]', sheet).attr( 's', '63' );
+                
+    
+              },
+            exportOptions: { 
+              orthogonal: 'export',
+              columns: [3,4,5,6,7,8,9,10,11,12,13,14,15] 
+            }
+        },
+        {
+            extend: 'pdf',
+            className:'btn btn-warning btn-md gap-1',
+            orientation: 'landscape',
+            pageSize: 'LETTER',
+            exportOptions: { 
+              orthogonal: 'export',
+              columns: [3,4,5,6,7,8,9,10,11,12,13,14,15] 
+            }
+        },       
+            ],
+           
+        columns: [
           { "visible": false},
           { "visible": false},
           { "data": 'name',
-          render: DataTable.render.text() },
+          render: function(data, type, row, meta){
+            return data.replaceAll('&amp;', '&');}
+          },
           { "data": 'subject',
-          render: DataTable.render.text() },
+          render: function(data, type, row, meta){
+            return data.replaceAll('&amp;', '&');
+          } },
           { "data": 'sends',
           render: DataTable.render.number()  },
+          {"data": "test"},
           { "data": 'opens',
-        render: DataTable.render.number() },
+          render: DataTable.render.number() },
+          {"data": null,
+          title: "Open %",
+          "render": function(data, type, row){
+            return Number.parseFloat((data["opens"] / data["sends"]) * 100).toFixed(2) + '%'}},
           { "data": 'clicks',
           render: DataTable.render.number()  },
+          {"data": null,
+          title: "Click %",
+          "render": function(data, type, row){
+            return Number.parseFloat((data["clicks"] / data["sends"]) * 100).toFixed(2) + '%'}},
+          {"data": null,
+          title: "C2O %",
+          "render": function(data, type, row){
+            return Number.parseFloat((data["clicks"] / data["opens"]) * 100).toFixed(2) + '%'}},
           { "data": 'spam',
           render: DataTable.render.number()  },
+          {"data": null,
+          title: "Spam %",
+          "render": function(data, type, row){
+            return Number.parseFloat((data["spam"] / data["sends"]) * 100).toFixed(2) + '%'}},
           { "data": 'unsubscribe',
           render: DataTable.render.number()  },
+          {"data": null,
+          title: "Unsub %",
+          "render": function(data, type, row){
+            return Number.parseFloat((data["unsubscribe"] / data["sends"]) * 100).toFixed(2) + '%'}},
           { "data": 'time_sent',
-        render: DataTable.render.datetime('','MMM Do YYYY, h:mm A', 'en') }
+          render: DataTable.render.datetime('','MMM Do YYYY, ddd h:mm A', 'en') },
       ],
     
-    order:[[9, 'desc']]
+    order:[[15, 'desc']],
+    select: {
+        style: 'os'
+        },
         
       }); 
+      //below up is for the calendar search
       let minDate, maxDate;
       DataTable.ext.search.push(function (settings, data, dataIndex) {
     let min = minDate.val();
     let max = maxDate.val();
-    let date = new Date(moment(data[9], 'MMM Do YYYY'));
+    let date = new Date(moment(data[15], 'MMM Do YYYY'));
  
     if (
         (min === null && max === null) ||
@@ -294,8 +399,10 @@ maxDate = new DateTime('#max', {
        // Refilter the table
 document.querySelectorAll('#min, #max').forEach((el) => {
   el.addEventListener('change', () => table.draw());
+  
 });
 
+//Highlights the row on click (makes it easier to keep track of the data you want to focus on)
 table.on('click', 'tbody tr', (e) => {
   let classList = e.currentTarget.classList;
 
@@ -306,36 +413,27 @@ table.on('click', 'tbody tr', (e) => {
       table.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
       classList.add('selected');
   }
-});
+}); 
 
-  }
-
-  function getSingleEmailCampaignDetails(id) {
-    var apiUrl = 'https://api.cc.email/v3/emails/' + id;
-    let accessToken = localStorage.getItem('accessToken');
+// This calculates the addition or loss of user emails sent between email campaigns
+//**It does not recalculate live. It happens once on "Display" */
+let summary = $('#myTable').DataTable();
+   // Loop through the rows to add tracking column and update values
+  // Update tracking values when the DataTable is sorted
+function updateTrackingValues(){
+    summary.rows({ order: 'current' }).every(function(rowIdx, tableLoop, rowLoop) {
+        var rowData = this.data();
+        var prevCellData = rowIdx > 0 ? summary.cell({ row: rowIdx - 1, column: summary.column('#sends').index() }).data() : 0;
   
-    axios.get(apiUrl, {
-      headers: {
-        'Authorization': 'Bearer ' + accessToken
-      }
-    })
-      .then(function(response) {
-        singleCampaignDataActivityId = response.data.campaign_activities[0].campaign_activity_id;
-        // document.getElementById('dataReturn').textContent = JSON.stringify(bulkEmails[0].name);
-        // console.log(bulkEmails)
-      })
-      .catch(function(error) {
-        console.error(error);
-      });
+        // Calculate and update the tracking value
+        var trackingValue = rowIdx === 0 ? rowData['sends'] : (prevCellData - rowData['sends']) * -1;
+        summary.cell(rowIdx, summary.column('#test').index()).data(trackingValue);
+            // Redraw the table after updating tracking values
+    summary.draw(false);
+    });
   }
+  updateTrackingValues();
 
-//   async function individualData(this){
-//     let singleCampaignDataActivityId = {};
-//     let singleCampaignActivity = {};
-//     let singleCampaignSendHistory = {};
-// https://blog.skay.dev/custom-spa-router-vanillajs   // deals with path routing and state management
-// // create popup and create api calls, make sure 2nd and 3rd calls are async/await
-
-//   }
+  }
 
 
