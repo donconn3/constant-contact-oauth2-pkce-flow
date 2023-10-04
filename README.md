@@ -1,14 +1,14 @@
 # Constant Contact PKCE Flow Webpage
 
-## THIS IS NOT A FULLY DEVELOPED PAGE AND SHOULD NOT BE DEPLOYED IN THE WILD - ONLY RUN LOCALLY
+## THIS IS SHOULD NOT BE DEPLOYED IN THE WILD - ONLY RUN LOCALLY
 Now that I have that out of the way here is the purpose of my project - Analytics.
 I do simple email analytics for the company I work for and didn't like the layout of Constant Contact's (CC) reporting page. So I built a small page to connect to our CC account and get all the data necessary for a report. 
 
 I highly suggest reading through CC developer Docs on their API. It's very comprehensive and well-written. I have spent months as a noob putting this together so it's messy. BUT, I am open to questions and suggestions from whoever finds this. 
-I have left comments throughout the openAI.js file to help navigate it a bit. And no, ChatGPT did not write these files; I put a shit-ton of work and research into making it happen. ChatGPT was used to help make sense of what I couldn't, and provide springboards to keep going.
+I have left comments throughout the openAI.js file to help navigate it a bit. And no, ChatGPT did not write these files; I put a lot of work and research into making it happen. ChatGPT was used to help make sense of what I couldn't, and provide springboards to keep going.
 
 ## Why only run locally?
-Great question! It's not secure. Your developer key is completely exposed along with your redirect uri. Let a Node.js server make the connection for your API calls. 
+Great question! It's not secure. Your developer credentials are completely exposed. Throw the authentication on a Node.js server to be more secure. 
 
 ## What can it do?
 - Make a connection to CC server to grab email campaign data
@@ -18,13 +18,13 @@ Great question! It's not secure. Your developer key is completely exposed along 
 - Sort the table by any metric displayed up top (default is date)
 - Allows you to download the table as an Excel file or PDF
 - Allows for SINGLE select or MULTI-select
-	- Any rows that are selected will be the only rows saved as a pdf/excel
-	- The same goes for any rows that are "hidden" when searching for emails between certain dates
+	- Any row(s) that are selected will be the only rows saved as a pdf/excel
+	- The same goes for any row(s) that are "hidden" when searching for emails between certain dates
 
 ## What doesn't it do?
 A lot if I'm honest.
 - No functionality for a refresh token
-- Only tested on Firefox (should work on Chrome? I don't have a mac to test on so . . .)
+- Only tested on Firefox (should work on Chrome? I don't have a mac to test.)
 - Custom built for what I needed done
 - No documentation (just comments and any support I can offer)
 - Custom built for MY needs, but that doesn't mean you couldn't figure it out
